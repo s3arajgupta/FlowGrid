@@ -1,0 +1,80 @@
+# FlowGrid Intersection Configuration
+# Sample: District 1, Ho Chi Minh City (Nguyen Hue Blvd & Le Loi)
+
+intersection_id: "HCMC-D1-001"
+name: "Nguyen Hue - Le Loi Intersection"
+city: "Ho Chi Minh City"
+country: "Vietnam"
+
+# Traffic Phasing: 4 Approaches (2 Phases or NEMA 4-Phase)
+approaches:
+  north:
+    name: "Nguyen Hue Northbound (Inbound to City Center)"
+    lanes: 3
+    is_major: true
+    default_pcu_weights:
+      motorcycle: 0.5
+      car: 1.0
+      bus: 2.5
+      truck: 3.0
+    roi_area_sqm: 450.0  # Approx area of detection zone in sq meters
+
+  south:
+    name: "Nguyen Hue Southbound (Outbound from City Center)"
+    lanes: 3
+    is_major: true
+    default_pcu_weights:
+      motorcycle: 0.5
+      car: 1.0
+      bus: 2.5
+      truck: 3.0
+    roi_area_sqm: 450.0
+
+  east:
+    name: "Le Loi Eastbound"
+    lanes: 2
+    is_major: false
+    default_pcu_weights:
+      motorcycle: 0.5
+      car: 1.0
+      bus: 2.5
+      truck: 3.0
+    roi_area_sqm: 300.0
+
+  west:
+    name: "Le Loi Westbound"
+    lanes: 2
+    is_major: false
+    default_pcu_weights:
+      motorcycle: 0.5
+      car: 1.0
+      bus: 2.5
+      truck: 3.0
+    roi_area_sqm: 300.0
+
+# Timing Constraints (seconds)
+constraints:
+  min_green_seconds: 10
+  max_green_seconds: 70
+  yellow_clearance_seconds: 3
+  all_red_clearance_seconds: 2
+  max_wait_fairness_seconds: 90
+  target_cycle_min_seconds: 60
+  target_cycle_max_seconds: 150
+
+# Optimizer Weights
+optimizer_weights:
+  delay_weight: 1.0
+  fairness_penalty_weight: 1.5
+  queue_overflow_weight: 2.0
+  transition_penalty_weight: 0.5
+
+# Saturation Flow Rate & Motorcycle Filtering
+motorcycle_filtering:
+  acceleration_bonus: 0.40 # 40% faster clearance for motorcycle-heavy cluster
+  base_saturation_flow_pcu_per_sec: 0.55 # ~2000 PCU / hour per green lane
+
+# Night-Time Fallback Thresholds
+night_mode:
+  ambient_brightness_threshold: 45 # 0-255 grayscale average
+  count_only_brightness_threshold: 20

@@ -25,12 +25,14 @@
 15. [Safety and Failure Modes](#15-safety-and-failure-modes)
 16. [Universal Deployment Model](#16-universal-deployment-model)
 17. [HCMC Case Study](#17-hcmc-case-study)
-18. [Hackathon Deliverables — 60-Day Plan](#18-hackathon-deliverables--60-day-plan)
-19. [Team Jam Breakers](#19-team-jam-breakers)
-20. [Post-Hackathon Roadmap](#20-post-hackathon-roadmap)
-21. [Conclusion](#21-conclusion)
-22. [Appendix A — Signal Phasing Reference](#appendix-a--signal-phasing-reference)
-23. [Appendix B — Data Requirements Per City Deployment](#appendix-b--data-requirements-per-city-deployment)
+18. [Application and ML Design](#18-application-and-ml-design)
+19. [Pilot Cost Estimate — HCMC](#19-pilot-cost-estimate--hcmc)
+20. [Hackathon Deliverables — 60-Day Plan](#20-hackathon-deliverables--60-day-plan)
+21. [Team Jam Breakers](#21-team-jam-breakers)
+22. [Future Scope](#22-future-scope)
+23. [Conclusion](#23-conclusion)
+24. [Appendix A — Signal Phasing Reference](#appendix-a--signal-phasing-reference)
+25. [Appendix B — Data Requirements Per City Deployment](#appendix-b--data-requirements-per-city-deployment)
 
 ---
 
@@ -67,7 +69,7 @@ Adjacent traffic signals operate independently. A driver who clears one green li
 ### 2.2 Scale of Impact
 
 | Metric | Ho Chi Minh City |
-|---|---|
+| --- | --- |
 | Population | ~9 million (metro: ~13 million) |
 | Registered motorcycles | ~7.4 million |
 | Percentage of traffic that is motorcycles | ~80% |
@@ -108,6 +110,7 @@ A traffic signal is a time-sharing mechanism. Multiple traffic streams (approach
 An ideal signal would give green time to each approach in exact proportion to its current demand, with zero wasted time, and would coordinate with neighboring signals so that vehicles travel through corridors without stopping.
 
 **What prevents this today?**
+
 1. **No sensing** — the controller doesn't know current demand
 2. **No adaptation** — cycles are fixed, not responsive
 3. **No coordination** — intersections operate in isolation
@@ -254,6 +257,7 @@ Each signalized intersection runs a **FlowGrid Node** — a self-contained edge 
 Traffic cameras mounted at intersection approaches capture real-time video. The vision processing layer (Section 7) extracts vehicle counts and density from this feed.
 
 **Camera specification for FlowGrid:**
+
 - Resolution: 1080p minimum (to detect motorcycles at distance)
 - Frame rate: 15 FPS minimum (sufficient for stopped/slow traffic counting)
 - Sensor: Low-light capable CMOS (e.g., Sony Starvis IMX335 or equivalent)
@@ -331,6 +335,7 @@ This abstraction is the **interface contract** between the Sensing Layer and the
 > **🔑 Design Choice — Why YOLO (You Only Look Once)?**
 >
 > FlowGrid requires a vision model that:
+>
 > 1. Runs at real-time speed (≥15 FPS) on edge hardware
 > 2. Detects small objects (motorcycles at distance)
 > 3. Classifies vehicle types (motorcycle, car, bus, truck)
@@ -402,11 +407,12 @@ The base YOLO model (pretrained on COCO) can detect standard vehicle classes out
 > Consider two intersection approaches:
 >
 > | Approach | Vehicles | Raw Count |
-> |---|---|---|
+> | --- | --- | --- |
 > | Side A | 40 motorcycles, 5 cars | 45 |
 > | Side B | 2 trucks, 8 cars, 2 buses | 12 |
 >
 > Raw count says Side A has nearly 4x the demand. But this is misleading:
+>
 > - Side B's 2 trucks and 2 buses occupy far more road space and take far longer to clear the intersection than Side A's compact motorcycles
 > - PCU-weighted demand: Side A = 40x0.5 + 5x1.0 = **25 PCU**. Side B = 2x3.0 + 8x1.0 + 2x2.5 = **19 PCU**
 > - The real demand ratio is closer to 1.3:1, not 3.75:1
@@ -416,7 +422,7 @@ The base YOLO model (pretrained on COCO) can detect standard vehicle classes out
 ### 8.2 PCU Conversion Table
 
 | Vehicle Type | Default PCU | Rationale |
-|---|---|---|
+| --- | --- | --- |
 | Motorcycle / 2-wheeler | 0.5 | Small footprint, fast acceleration from stop |
 | Car / sedan / SUV (4-wheeler) | 1.0 | Reference unit |
 | Bus (xe buyt) | 2.5 | Large footprint, slow acceleration |
@@ -499,7 +505,7 @@ FlowGrid supports the standard **NEMA phasing convention** as the default, while
 **Full NEMA 8-Phase (complex intersections):**
 
 | Phase | Movement |
-|---|---|
+| --- | --- |
 | Phase 1 | Major street left turn (opposing Phase 6 through) |
 | Phase 2 | Major street through |
 | Phase 3 | Minor street left turn (opposing Phase 8 through) |
@@ -512,7 +518,7 @@ FlowGrid supports the standard **NEMA phasing convention** as the default, while
 **Simplified 2-Phase (simple intersections):**
 
 | Phase | Movement |
-|---|---|
+| --- | --- |
 | Phase A | All major street movements |
 | Phase B | All minor street movements |
 
@@ -556,12 +562,13 @@ Without a green wave, the same driver might stop at 2–3 of these 4 lights, add
 > Three coordination topologies were considered:
 >
 > | Topology | Pros | Cons |
-> |---|---|---|
+> | --- | --- | --- |
 > | **Centralized** (one city controller) | Simple logic | Single point of failure; network latency |
 > | **Peer-to-peer mesh** | Maximum resilience | Consensus is hard; complex protocol |
 > | **Hierarchical** (city → corridor → node) | Natural fit for road networks; graceful degradation | Requires corridor definition |
 >
 > We chose hierarchical because:
+>
 > 1. **Road networks are naturally hierarchical** — arterial roads, collector roads, local streets form a natural hierarchy
 > 2. **Green waves are corridor-level** — coordination is most impactful between sequential intersections on the same road, not between distant intersections
 > 3. **Graceful degradation** — if the city-level coordinator fails, corridors continue operating independently. If a corridor controller fails, individual intersections continue optimizing locally. At no point does a failure cascade
@@ -638,7 +645,7 @@ The switch times and directions are configurable per corridor.
 > Therefore, FlowGrid places **all real-time control logic at the edge** — on the intersection node itself. The cloud platform serves three non-critical functions only:
 >
 > | Function | Criticality | Failure Impact |
-> |---|---|---|
+> | --- | --- | --- |
 > | Monitoring dashboard | Non-critical | Operators lose visibility, signals continue |
 > | Model weight updates | Non-critical | Old model continues running, still functional |
 > | GPS corridor speed data | Non-critical | Green wave uses last known speed or design speed |
@@ -648,19 +655,21 @@ The switch times and directions are configurable per corridor.
 Each intersection node runs on commodity edge computing hardware:
 
 **Minimum viable edge device:**
+
 - NVIDIA Jetson Orin Nano (~$250) or equivalent (e.g., Rockchip RK3588, Google Coral)
 - Runs YOLO inference at 30+ FPS on 1080p input
 - Sufficient compute for optimization algorithm
 - Low power consumption (~15W)
 
 **Connectivity:**
+
 - Primary: 4G/LTE cellular modem (for cloud communication and corridor coordination)
 - Fallback: If connectivity is lost, node operates fully autonomously using local sensing only
 
 ### 11.2 Software Stack
 
 | Component | Technology |
-|---|---|
+| --- | --- |
 | Vision inference | YOLO (ONNX Runtime or TensorRT on Jetson) |
 | Optimization engine | Python or C++ (performance-critical path) |
 | Corridor communication | MQTT or gRPC (lightweight, low-latency) |
@@ -703,7 +712,7 @@ Full Dark          Camera (IR-assisted)   Headlight blob        Vehicle count
 Alternative approaches and why they were rejected:
 
 | Alternative | Cost | Reliability | Why Rejected |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Radar/microwave sensor | $500–2,000/unit | High (weather-immune) | High capital expenditure for a limited-duration use case (a few hours per day) |
 | Thermal/FLIR camera | $2,000–10,000/unit | High | Prohibitively expensive for city-wide deployment |
 | IR illumination + standard camera | $20–50/unit | Good | **Selected** — minimal cost, good performance |
@@ -717,11 +726,13 @@ Alternative approaches and why they were rejected:
 > **🔑 Design Choice — Why IR/radio preemption over audio detection?**
 >
 > Audio-based siren detection (using microphones) was considered but rejected:
+>
 > - Siren frequencies vary by country (US: wail/yelp ~1–3kHz; Europe: different patterns; Vietnam: different again)
 > - Urban ambient noise creates high false-positive rates
 > - Directionality is hard to determine — a siren from a parallel street should not trigger preemption
 >
 > Instead, FlowGrid uses **dedicated preemption hardware** (similar to the Opticom system widely deployed in North America):
+>
 > - Each emergency vehicle is equipped with a small IR or radio transmitter (~$100/vehicle)
 > - Each intersection has a receiver that detects the approaching emergency vehicle and its direction
 > - This method has near-zero false positives and unambiguous directionality
@@ -747,6 +758,7 @@ If two emergency vehicles approach from conflicting directions simultaneously, t
 ### 14.1 The ASEAN Challenge
 
 In Western cities, traffic engineering assumes:
+
 - Vehicles queue in lanes
 - Queue length can be measured in "vehicles per lane"
 - One vehicle = one car = one unit of demand
@@ -775,6 +787,7 @@ Accounts for the faster queue clearance of motorcycle-heavy approaches. When the
 A uniquely ASEAN driving behavior: during a red phase, motorcycles **filter to the front** of the queue, squeezing past stopped cars. By the time the light turns green, motorcycles are clustered at the stop line and cars are behind them.
 
 **Impact on FlowGrid:**
+
 - The first 3–5 seconds of green clear motorcycles rapidly (fast acceleration, small size)
 - The remaining green time clears cars and larger vehicles at the normal rate
 - The Optimization Engine's saturation flow rate model accounts for this two-phase clearance pattern
@@ -809,7 +822,7 @@ This hardware layer is the **ultimate safety guarantee** and is why FlowGrid can
 ### 15.3 Fallback Modes
 
 | Failure | Detection | Fallback |
-|---|---|---|
+| --- | --- | --- |
 | Camera failure | No detections for >30 seconds | Revert to fixed-cycle timing for that approach |
 | All cameras fail | No detections on any approach | Full fixed-cycle fallback (pre-programmed timing) |
 | Edge device crash | Watchdog timer, no heartbeat | Signal controller reverts to its built-in fixed timing |
@@ -821,7 +834,7 @@ This hardware layer is the **ultimate safety guarantee** and is why FlowGrid can
 All jurisdictions mandate minimum green, yellow, and all-red durations. These are **hard constraints** in the optimization engine and cannot be overridden by any optimization objective:
 
 | Parameter | Typical Range | Enforced By |
-|---|---|---|
+| --- | --- | --- |
 | Minimum green | 7–15 seconds | Software constraint (hard limit) |
 | Yellow change interval | 3–5 seconds | Signal controller hardware |
 | All-red clearance | 1–3 seconds | Signal controller hardware |
@@ -871,6 +884,7 @@ Week 3–4: CALIBRATION
 ### 16.3 Right-Hand vs. Left-Hand Traffic
 
 The current implementation focuses on **right-hand traffic** (used in Vietnam, most of ASEAN, Europe, Americas — ~65% of the world). Left-hand traffic support (UK, Japan, Thailand, Indonesia, India, Australia) requires:
+
 - Mirrored intersection geometry in the configuration
 - Adjusted phase definitions (left turns become right turns)
 - No changes to the vision model, optimization engine, or coordination layer
@@ -884,7 +898,7 @@ This is a configuration change, not an architectural change.
 ### 17.1 Why Ho Chi Minh City?
 
 | Factor | Relevance |
-|---|---|
+| --- | --- |
 | **Scale of problem** | 9M population, 7.4M motorcycles, severe daily congestion |
 | **Motorcycle dominance** | 80% motorcycle traffic — the hardest case for any traffic system |
 | **Growing vehicle fleet** | Car ownership rising rapidly — congestion will worsen without intervention |
@@ -910,7 +924,7 @@ For the hackathon demonstration, we propose targeting a **single corridor in Dis
 Based on published results from adaptive signal control deployments in comparable cities:
 
 | Metric | Fixed-Cycle Baseline | FlowGrid Expected | Improvement |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Average delay per vehicle | 45–90 seconds | 25–50 seconds | 30–45% reduction |
 | Number of stops per corridor | 3–5 per km | 1–2 per km | 50–60% reduction |
 | Corridor travel time | Variable, high variance | More consistent, lower mean | 15–25% reduction |
@@ -924,6 +938,7 @@ Based on published results from adaptive signal control deployments in comparabl
 To build and validate the HCMC prototype, Team Jam Breakers will work with Vietnamese mentors to obtain:
 
 **Critical (blocks prototype):**
+
 1. Traffic camera footage — 2–3 days from 10–20 intersections, covering peak hours
 2. Current signal timing plans — existing fixed-cycle durations and phase sequences
 3. Intersection-level vehicle counts — by vehicle type, at 15-minute intervals
@@ -939,12 +954,226 @@ To build and validate the HCMC prototype, Team Jam Breakers will work with Vietn
 
 ---
 
-## 18. Hackathon Deliverables — 60-Day Plan
+## 18. Application and ML Design
 
-### 18.1 Scope: What We Build vs. Full Vision
+### 18.1 Application Architecture Overview
+
+FlowGrid's software is organized into three deployment contexts — **Edge Application** (per intersection), **Corridor Service** (per corridor), and **Cloud Platform** (city-wide). Each is designed for independent operation with graceful connectivity.
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                      CLOUD PLATFORM                              │
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐  │
+│  │  Web Dashboard│  │  Model       │  │  GPS Data Aggregator   │  │
+│  │  (React/Vue)  │  │  Registry    │  │  (API adapters for     │  │
+│  │               │  │  (weights +  │  │   Grab, Google, HERE)  │  │
+│  │  - Live map   │  │   versions)  │  │                        │  │
+│  │  - Analytics  │  │              │  │  - Corridor speed calc  │  │
+│  │  - Config UI  │  │  - Push to   │  │  - Congestion alerts   │  │
+│  │  - Alerts     │  │    edge OTA  │  │                        │  │
+│  └──────┬───────┘  └──────┬───────┘  └───────────┬────────────┘  │
+│         └─────────────────┼──────────────────────┘               │
+│                           │ REST API / WebSocket                 │
+├───────────────────────────┼──────────────────────────────────────┤
+│                    CORRIDOR SERVICE                              │
+│                    (runs on edge or lightweight VM)               │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  Green Wave Coordinator                                    │  │
+│  │  - Receives GPS corridor speed from Cloud                  │  │
+│  │  - Computes adaptive offsets per intersection pair          │  │
+│  │  - Publishes offset commands to nodes via MQTT              │  │
+│  │  - AM/PM wave direction scheduler                          │  │
+│  └────────────────────────────────────────────────────────────┘  │
+├───────────────────────────┼──────────────────────────────────────┤
+│                    EDGE APPLICATION (per node)                   │
+│                                                                  │
+│  ┌────────────┐  ┌───────────────┐  ┌─────────────────────────┐  │
+│  │  Camera     │  │  Optimization │  │  Signal Controller      │  │
+│  │  Inference  │  │  Engine       │  │  Interface              │  │
+│  │  Pipeline   │  │               │  │                         │  │
+│  │  (YOLO +    │→ │  (PCU calc +  │→ │  (NTCIP / serial       │  │
+│  │   density)  │  │   phase       │  │   commands to existing  │  │
+│  │             │  │   allocator)  │  │   signal controller)   │  │
+│  └────────────┘  └───────────────┘  └─────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  Local Data Store (SQLite) — logs, config, fallback timings│  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### 18.2 ML Pipeline Design
+
+The ML pipeline covers training, deployment, and runtime inference:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     TRAINING PIPELINE (one-time per city)        │
+│                                                                 │
+│  Raw Video ──→ Frame Extraction ──→ Annotation (CVAT) ──→       │
+│  ──→ Dataset Split (80/10/10) ──→ Transfer Learning ──→         │
+│  ──→ Validation (mAP >85%) ──→ Export (ONNX) ──→               │
+│  ──→ Model Registry (Cloud)                                     │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     DEPLOYMENT PIPELINE                          │
+│                                                                 │
+│  Model Registry ──→ OTA Push to Edge ──→ TensorRT Optimization  │
+│  ──→ A/B Test (shadow mode) ──→ Promote to Active               │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     RUNTIME INFERENCE (per frame, on edge)       │
+│                                                                 │
+│  Camera Frame (1080p @ 15 FPS)                                  │
+│       │                                                         │
+│       ▼                                                         │
+│  Pre-processing (resize, normalize)                             │
+│       │                                                         │
+│       ▼                                                         │
+│  YOLO Inference (TensorRT, <30ms per frame)                     │
+│       │                                                         │
+│       ├──→ Bounding Boxes + Class Labels                        │
+│       │         │                                               │
+│       │         ├──→ Per-Class Vehicle Count                    │
+│       │         └──→ Area Density = sum(bbox_area) / ROI_area   │
+│       │                                                         │
+│       ▼                                                         │
+│  Temporal Smoothing (rolling 5-10s window)                      │
+│       │                                                         │
+│       ▼                                                         │
+│  Night-Time Mode Check (ambient light sensor)                   │
+│       │                                                         │
+│       ├──→ [Day] Full classification output                     │
+│       ├──→ [Dusk] Classification + headlight validation          │
+│       └──→ [Night] Count-only mode (1 PCU per detection)        │
+│                                                                 │
+│       ▼                                                         │
+│  ApproachDemand Output ──→ Optimization Engine                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 18.3 Model Architecture Details
+
+| Parameter | Value |
+|---|---|
+| **Base model** | YOLOv8m (medium) — balance of accuracy and speed |
+| **Input resolution** | 640x640 (resized from 1080p) |
+| **Classes** | motorcycle, car, bus, truck (4 classes) |
+| **Pretrained on** | COCO dataset (80 classes, vehicle subset relevant) |
+| **Fine-tuning approach** | Freeze backbone (first 10 layers), retrain neck + head |
+| **Fine-tuning dataset** | 1,000–2,000 annotated frames from target city |
+| **Training hardware** | Single GPU (T4/V100), 4–8 hours |
+| **Export format** | ONNX → TensorRT (for Jetson deployment) |
+| **Inference speed** | <30ms per frame (Jetson Orin Nano) |
+| **Target mAP@0.5** | >85% across all 4 classes |
+
+### 18.4 Technology Stack
+
+| Layer | Technology | Rationale |
+|---|---|---|
+| **Edge inference** | PyTorch → ONNX → TensorRT | Maximizes FPS on NVIDIA edge hardware |
+| **Edge application** | Python 3.10+ | Rapid development, strong ML ecosystem |
+| **Optimization engine** | Python (NumPy/SciPy) | Sufficient for per-cycle optimization (<100ms) |
+| **Corridor communication** | MQTT (Mosquitto) | Lightweight pub/sub, works over 4G, resilient to intermittent connectivity |
+| **Cloud API** | FastAPI (Python) | Async, lightweight, easy to deploy |
+| **Dashboard frontend** | React + Leaflet (maps) | Interactive maps, real-time WebSocket updates |
+| **Database (cloud)** | PostgreSQL + TimescaleDB | Time-series traffic data, analytics queries |
+| **Database (edge)** | SQLite | Zero-config, embedded, offline-capable |
+| **Simulation** | SUMO (Simulation of Urban MObility) | Open-source, Python API (TraCI), validated by research community |
+| **Annotation tool** | CVAT (open-source) | Free, supports video annotation, team collaboration |
+| **Version control** | Git + DVC (Data Version Control) | Code + model weight versioning |
+
+### 18.5 Data Flow Summary
+
+```
+                     Real-time Path (< 100ms)
+Camera ──→ YOLO ──→ Demand ──→ Optimizer ──→ Signal Controller
+                                  ↑
+                          Corridor Offset
+                          (from MQTT, ~1s)
+                                  ↑
+                     GPS Speed Data (from Cloud, ~30s)
+
+
+                     Analytics Path (non-critical)
+Edge SQLite ──→ Batch Sync ──→ Cloud PostgreSQL ──→ Dashboard
+                 (every 5 min)
+```
+
+---
+
+## 19. Pilot Cost Estimate — HCMC
+
+### 19.1 Design Principle: Minimal Viable Investment
+
+FlowGrid is designed to be deployed **incrementally** — start with one corridor, prove value, then expand. The pilot cost estimate below covers a **single corridor of 10 intersections** in District 1, HCMC.
+
+### 19.2 Hardware Cost (Per 10-Intersection Corridor)
+
+| Item | Unit Cost | Qty | Total |
+|---|---|---|---|
+| Traffic camera (1080p, IR-capable, weatherproof) | $300 | 40 (4 per intersection) | $12,000 |
+| Edge compute device (Jetson Orin Nano or equiv.) | $250 | 10 | $2,500 |
+| IR illuminator (850nm LED) | $30 | 40 | $1,200 |
+| Mounting hardware & cabling | $100 | 10 | $1,000 |
+| 4G/LTE modem per node | $50 | 10 | $500 |
+| Emergency preemption receiver | $150 | 10 | $1,500 |
+| Emergency vehicle transmitter | $100 | 20 | $2,000 |
+| **Hardware subtotal** | | | **$20,700** |
+
+### 19.3 Software & Cloud Cost (First Year)
+
+| Item | Monthly | Annual |
+|---|---|---|
+| Cloud hosting (monitoring dashboard, APIs, analytics) | $50 | $600 |
+| GPS data API (Google/TomTom — corridor-level queries) | $30 | $360 |
+| 4G data plans (10 nodes, low bandwidth) | $100 | $1,200 |
+| CVAT annotation hosting (self-hosted, one-time setup) | — | $0 |
+| **Software subtotal** | | **$2,160** |
+
+### 19.4 Human Effort (One-Time, Fine-Tuning for HCMC)
+
+| Task | Effort | Cost Estimate |
+|---|---|---|
+| Camera installation & wiring (local contractor) | 5 days | $2,000 |
+| Traffic data collection (camera footage + vehicle counts) | 3 days | Mentor-supported |
+| Image annotation (1,500 images) | 5 days | $500 (local annotators) |
+| Model fine-tuning & validation | 2 days | Team effort |
+| Intersection configuration & corridor mapping | 2 days | Mentor-supported |
+| Shadow mode calibration & testing | 5 days | Team effort |
+| **Human effort subtotal** | ~3 weeks | **~$2,500** |
+
+### 19.5 Total Pilot Investment
+
+| Category | Cost |
+|---|---|
+| Hardware (10 intersections) | $20,700 |
+| Software & cloud (year 1) | $2,160 |
+| Human effort (one-time) | $2,500 |
+| **Total pilot cost** | **~$25,360** |
+| **Per intersection** | **~$2,536** |
+
+> **Context:** This is significantly lower than comparable systems. SCATS and SCOOT deployments typically cost $20,000–50,000 *per intersection* for hardware and licensing alone. FlowGrid achieves this through open-source software, commodity edge hardware, and camera-based sensing that avoids expensive road-embedded sensors.
+
+### 19.6 Expansion Economics
+
+After the pilot proves value, expanding to additional corridors costs less due to:
+- **No repeated software development** — same codebase, same dashboard
+- **No repeated model training** — HCMC model works across all HCMC intersections
+- **Bulk hardware pricing** — cameras and edge devices drop 20–30% at volume
+- **Estimated expansion cost:** ~$1,800–2,200 per intersection (hardware + installation only)
+
+---
+
+## 20. Hackathon Deliverables — 60-Day Plan
+
+### 20.1 Scope: What We Build vs. Full Vision
 
 | Component | Hackathon Scope | Full Vision (Post-Hackathon) |
-|---|---|---|
+| --- | --- | --- |
 | **Vision model** | YOLO fine-tuned on HCMC footage, running on video files | Real-time camera processing on edge device |
 | **Optimization engine** | Full implementation, tested in simulation | Production-hardened, deployed at real intersections |
 | **Green wave coordination** | Simulated on 1 corridor in SUMO | Multi-corridor, city-wide deployment |
@@ -952,7 +1181,7 @@ To build and validate the HCMC prototype, Team Jam Breakers will work with Vietn
 | **Edge deployment** | Software running on laptop/cloud (simulating edge) | Actual Jetson/edge hardware at intersections |
 | **Emergency preemption** | Simulated in SUMO | Real IR/radio preemption hardware |
 
-### 18.2 60-Day Timeline
+### 20.2 60-Day Timeline with Mentor
 
 ```
 PHASE 1: FOUNDATION (Weeks 1–2)
@@ -1018,10 +1247,10 @@ All team members:
   └── Documentation finalization
 ```
 
-### 18.3 Key Milestones
+### 20.3 Key Milestones
 
 | Week | Milestone | Deliverable |
-|---|---|---|
+| --- | --- | --- |
 | 2 | Vision model v1 | YOLO detecting motorcycles, cars, buses, trucks on HCMC footage |
 | 3 | SUMO simulation running | HCMC corridor simulated with realistic traffic demand |
 | 5 | Optimization engine complete | Adaptive signal timing running in SUMO, outperforming fixed-cycle |
@@ -1031,10 +1260,10 @@ All team members:
 
 ---
 
-## 19. Team Jam Breakers
+## 21. Team Jam Breakers
 
 | Role | Responsibility |
-|---|---|
+| --- | --- |
 | **AI Engineer** | Vision model (YOLO fine-tuning, inference pipeline), area density estimation, night-time fallback, edge deployment optimization |
 | **Researcher** | Traffic engineering domain (PCU model, optimization objectives, SUMO simulation), data collection coordination with Vietnamese mentors, performance analysis and validation |
 | **Full Stack Developer** | System architecture, monitoring dashboard, green wave coordination protocol, sensor abstraction interfaces, system integration |
@@ -1043,42 +1272,57 @@ All team members:
 
 ---
 
-## 20. Post-Hackathon Roadmap
+## 22. Future Scope
 
-### Phase 1: Pilot Deployment (Months 3–6)
-- Partner with HCMC traffic management center for a live pilot on one corridor (8–12 intersections)
-- Deploy actual edge hardware (Jetson Orin Nano) and cameras
-- Measure real-world performance vs. simulation predictions
-- Iterate on optimization parameters based on real data
+FlowGrid's current scope focuses on vehicular traffic optimization. The following areas represent natural extensions that can be pursued after the hackathon, in collaboration with Vietnamese transport authorities and mentors.
 
-### Phase 2: City-Wide Expansion (Months 6–12)
-- Extend to 5–10 corridors across HCMC
-- Deploy emergency vehicle preemption hardware on ambulances and fire trucks
-- Integrate GPS floating car data from Grab for adaptive green wave offsets
-- Build operator training program for monitoring dashboard
+### 22.1 Pedestrian Accountability
 
-### Phase 3: ASEAN Expansion (Year 2)
-- Transfer to Hanoi (similar traffic profile, minimal re-tuning)
-- Adapt for Bangkok, Jakarta, Manila (different vehicle mixes, some left-hand traffic)
-- Build city-deployment toolkit for rapid onboarding
+Pedestrians are a critical and vulnerable group in urban traffic. While currently out of scope for the hackathon prototype, FlowGrid's architecture is designed to accommodate pedestrian integration in future iterations:
 
-### Phase 4: Global (Year 3+)
-- Car-dominant city deployments (different PCU weights, simpler density estimation)
-- Left-hand traffic support
-- Integration with V2X (Vehicle-to-Everything) communication as it becomes available
-- Pedestrian and cyclist detection modules (currently out of scope)
+**Pedestrian Detection via Existing Cameras:**
+The same YOLO model used for vehicle detection can be extended to detect pedestrians. The COCO dataset (on which YOLO is pretrained) already includes a `person` class. Fine-tuning for pedestrian detection at crossings requires minimal additional annotation — pedestrians at intersections are visually distinct and easier to detect than vehicles in dense motorcycle traffic.
 
-### Low Priority / Future Features
-- **Pedestrian zebra crossing on ad-hoc request** — pedestrian push-button integration that triggers a walk phase on demand
-- **Strategic road construction recommendations** — using traffic flow data to identify bottlenecks where new road infrastructure would have maximum impact
+**Pedestrian-Responsive Signal Phases:**
+- **Push-button crossings:** Many intersections have pedestrian push-buttons. FlowGrid can integrate these as a sensor input — when a pedestrian presses the button, the optimization engine allocates a walk phase within the next cycle
+- **Camera-triggered crossings:** Where push-buttons don't exist, the camera can detect pedestrians waiting at the curb. If pedestrians are detected waiting for more than a configurable threshold (e.g., 15–30 seconds), the system automatically inserts a walk phase — eliminating the need for physical push-button hardware
+- **Minimum walk time enforcement:** When a walk phase is active, the system enforces a minimum crossing time based on crosswalk width and standard pedestrian walking speed (typically 1.2 m/s), ensuring pedestrians can safely complete the crossing
+
+**Pedestrian Safety Metrics:**
+FlowGrid can track and report pedestrian-related metrics through the monitoring dashboard:
+- Number of pedestrian crossing requests per intersection per hour
+- Average pedestrian wait time before receiving a walk signal
+- Pedestrian density at crossings (potential crowding alerts)
+- Near-miss detection (vehicles entering the intersection during walk phase)
+
+**Impact on Vehicle Optimization:**
+Adding pedestrian phases reduces available green time for vehicles. The optimization engine's multi-objective function would gain an additional weight parameter (`w5 * PedestrianWaitPenalty`) to balance pedestrian service against vehicular throughput. In pedestrian-heavy areas (school zones, markets, tourist districts), this weight would be set high. On arterial roads with grade-separated pedestrian crossings, it can be set to zero.
+
+### 22.2 Strategic Road Infrastructure Recommendations
+
+With sustained data collection over months, FlowGrid can identify chronic bottlenecks — intersections where demand consistently exceeds capacity regardless of signal optimization. These locations are candidates for infrastructure investment:
+
+- **New road links** that would redistribute traffic away from saturated corridors
+- **Grade-separated crossings** (flyovers/underpasses) at intersections where signal optimization reaches its theoretical limit
+- **Turn lane additions** at intersections where left-turn demand consistently starves through traffic
+
+This capability transforms FlowGrid from a reactive optimization tool into a **proactive urban planning advisor**, providing data-backed evidence for infrastructure investment decisions.
+
+### 22.3 Additional Future Directions
+
+- **Cyclist detection and protected phases** — as cycling infrastructure grows in ASEAN cities
+- **V2X (Vehicle-to-Everything) integration** — as connected vehicles become prevalent, direct vehicle-to-infrastructure communication can supplement camera-based sensing
+- **Public transit signal priority** — giving buses preferential treatment at signals to improve schedule reliability
+- **Multi-city analytics dashboard** — comparative performance metrics across deployed cities
 
 ---
 
-## 21. Conclusion
+## 23. Conclusion
 
 FlowGrid addresses a problem that affects millions of urban commuters daily — not through incremental improvements to existing systems, but by rethinking traffic signal control from first principles.
 
 The system is:
+
 - **Practical** — it works with existing traffic signal infrastructure, requires only cameras and commodity edge hardware, and can be deployed in 3–4 weeks per city
 - **Innovative** — it introduces PCU-weighted demand estimation, area density measurement for motorcycle-fluid traffic, and adaptive green waves using GPS floating car data
 - **Impactful** — simulation-validated improvements of 30–45% reduction in average delay, directly benefiting millions of commuters
@@ -1147,7 +1391,7 @@ Phases within the same ring are sequential. Phases in different rings but the sa
 ### Critical Data (Blocks Deployment)
 
 | # | Data Item | Source | Format | Volume |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 1 | Traffic camera footage | City traffic center / new cameras | Video (MP4/H.264) | 2–4 days, 10–20 intersections, peak hours |
 | 2 | Current signal timing plans | City traffic engineering dept. | Spreadsheet / PDF | All target intersections |
 | 3 | Vehicle counts by type | Manual counts or existing sensors | CSV / spreadsheet | 15-min intervals, 1 full day, 5–10 intersections |
@@ -1155,7 +1399,7 @@ Phases within the same ring are sequential. Phases in different rings but the sa
 ### Important Data (Improves Quality)
 
 | # | Data Item | Source | Format | Volume |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 4 | Corridor identification | Local traffic engineers | Map / list | 3–5 priority corridors |
 | 5 | OSM road network validation | Local team on-ground | OpenStreetMap edits | Target deployment area |
 | 6 | Congestion hotspot list | Traffic police / city data | Map / list | Top 10–20 worst intersections |
@@ -1163,7 +1407,7 @@ Phases within the same ring are sequential. Phases in different rings but the sa
 ### Nice-to-Have Data (Enhanced Capabilities)
 
 | # | Data Item | Source | Format | Volume |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 7 | GPS corridor speed traces | Grab / taxi companies / research | CSV (timestamp, lat, lng, speed) | 1 week, major corridors |
 | 8 | Incident / accident records | Traffic police | CSV / database | 1 year historical |
 | 9 | Public transit routes and schedules | City transit authority | GTFS format | Current schedules |

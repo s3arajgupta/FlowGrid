@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+env/
+venv/
+*.pt
+*.onnx
+*.engine
+.DS_Store
+*.swp
+results/*.jpg
+results/*.png
+!results/.gitkeep
