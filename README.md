@@ -78,7 +78,7 @@ $$\text{Density}_{\text{area}} = \min\left(1.0, \frac{\sum \text{Bounding Box Ar
 If an approach is tightly packed with motorcycles ($>75\%$ density), the optimizer assigns a queue overflow prevention penalty to avoid spillback.
 
 ### C. Edge-First, Cloud-Informed Architecture
-- **Zero Cloud Latency in Critical Path**: All real-time inferences and signal switching decisions run locally on commodity edge compute (e.g., NVIDIA Jetson Orin Nano, $\sim\$250$).
+- **Zero Cloud Latency in Critical Path**: All real-time inferences and signal switching decisions run locally on standard embedded edge compute housed directly in existing signal cabinets.
 - **Hardware Conflict Monitor Intact**: The physical Conflict Monitor Unit (CMU) remains in place to physically prevent conflicting green lights under any software failure.
 - **Cloud Role**: Monitoring dashboards, historical analytics, and non-critical OTA model weight updates.
 
@@ -216,7 +216,7 @@ FlowGrid/
 
 ## 7. Comprehensive Proposal Document
 
-For full mathematical formulations, safety failure mode analysis, NEMA phase references, Vietnamese mentor collaboration data requirements, and HCMC pilot cost breakdowns ($\sim\$2,536$ per intersection), please consult:
+For full mathematical formulations, safety failure mode analysis, NEMA phase references, Vietnamese mentor collaboration data requirements, and the HCMC infrastructure integration strategy, please consult:
 
 📄 **[FlowGrid Technical Proposal & Whitepaper (FlowGrid_Proposal.md)](./FlowGrid_Proposal.md)**
 

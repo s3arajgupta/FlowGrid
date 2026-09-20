@@ -26,7 +26,7 @@
 16. [Universal Deployment Model](#16-universal-deployment-model)
 17. [HCMC Case Study](#17-hcmc-case-study)
 18. [Application and ML Design](#18-application-and-ml-design)
-19. [Pilot Cost Estimate — HCMC](#19-pilot-cost-estimate--hcmc)
+19. [Infrastructure and Hardware Integration Strategy](#19-infrastructure-and-hardware-integration-strategy)
 20. [Hackathon Deliverables — 60-Day Plan](#20-hackathon-deliverables--60-day-plan)
 21. [Team Jam Breakers](#21-team-jam-breakers)
 22. [Future Scope](#22-future-scope)
@@ -47,7 +47,7 @@
 - **Designed for motorcycle-dominant traffic** — unlike Western solutions, FlowGrid uses Passenger Car Unit (PCU) weighting and area density estimation to correctly handle the fluid, lane-agnostic nature of motorcycle traffic prevalent across ASEAN cities.
 - **Edge-first, cloud-informed** — all safety-critical decisions happen at the intersection with zero dependency on network connectivity. Cloud infrastructure handles monitoring, analytics, and policy updates only.
 - **Sensor-agnostic** — works with cameras alone (minimal deployment), but seamlessly integrates induction loops, GPS floating car data, and emergency vehicle preemption sensors where available.
-- **Low capital expenditure** — leverages pretrained neural networks (YOLO family) fine-tuned on local traffic, runs on commodity edge hardware, and integrates with existing traffic signal infrastructure without replacing it.
+- **Minimal infrastructure requirement** — leverages pretrained neural networks (YOLO family) fine-tuned on local traffic, runs on standard edge compute devices, and directly connects to existing municipal traffic camera feeds and signal controller cabinets without requiring new road-embedded hardware or civil works.
 - **Universal architecture, local tuning** — the system architecture, interfaces, and protocols are universal. Only the vision model weights and optimization parameters need local adaptation per city — a one-time effort of 2–4 weeks, refreshed annually.
 
 ---
@@ -265,7 +265,7 @@ Traffic cameras mounted at intersection approaches capture real-time video. The 
 - Mounting: Traffic signal pole or dedicated pole, 5–8m height, angled downward at approach
 - One camera per approach direction (typical 4-way intersection = 4 cameras)
 
-**Cost estimate:** $200–500 per camera (industrial-grade, weatherproof). A 4-way intersection requires $800–2,000 in camera hardware.
+**Hardware integration & compatibility:** FlowGrid is designed to ingest standard RTSP/H.264 video streams from existing municipal traffic cameras already installed at major intersections. Where camera feeds are already available from the city traffic center, zero new camera installation is required. Where new cameras are added, standard off-the-shelf IP cameras are fully compatible.
 
 #### 6.2.2 Induction Loops (Secondary, Where Available)
 
@@ -341,7 +341,7 @@ This abstraction is the **interface contract** between the Sensing Layer and the
 > 3. Classifies vehicle types (motorcycle, car, bus, truck)
 > 4. Has pretrained weights on vehicle classes (to minimize fine-tuning effort)
 >
-> The YOLO family (specifically YOLOv8 or later) meets all four criteria. It is pretrained on the COCO dataset, which includes `car`, `motorcycle`, `bus`, `truck`, and `bicycle` as built-in classes. It runs at 30+ FPS on edge hardware like NVIDIA Jetson Orin Nano (~$250) or equivalent. Fine-tuning for local traffic conditions (e.g., Vietnamese motorcycle styles, xe lam, xe buyt) requires as few as 1,000–2,000 annotated images and a few hours of GPU training.
+> The YOLO family (specifically YOLOv8 or later) meets all four criteria. It is pretrained on the COCO dataset, which includes `car`, `motorcycle`, `bus`, `truck`, and `bicycle` as built-in classes. It runs at 30+ FPS on standard embedded edge hardware (such as NVIDIA Jetson, Rockchip RK3588, or industrial edge compute modules). Fine-tuning for local traffic conditions (e.g., Vietnamese motorcycle styles, xe lam, xe buyt) requires as few as 1,000–2,000 annotated images and a few hours of GPU training.
 >
 > Alternative models (EfficientDet, RT-DETR) were considered but YOLO offers the best balance of speed, accuracy, and edge deployment maturity for this use case.
 
@@ -652,14 +652,14 @@ The switch times and directions are configurable per corridor.
 
 ### 11.1 Edge Hardware
 
-Each intersection node runs on commodity edge computing hardware:
+Each intersection node runs on standard, commercially available embedded edge computing hardware housed directly within the existing roadside traffic signal controller cabinet:
 
-**Minimum viable edge device:**
+**Edge compute device options:**
 
-- NVIDIA Jetson Orin Nano (~$250) or equivalent (e.g., Rockchip RK3588, Google Coral)
-- Runs YOLO inference at 30+ FPS on 1080p input
-- Sufficient compute for optimization algorithm
-- Low power consumption (~15W)
+- NVIDIA Jetson Orin Nano, Rockchip RK3588, or industrial ARM/x86 edge modules
+- Compact form factor that installs directly inside existing signal controller cabinets
+- Runs YOLO inference at 30+ FPS on 1080p input with low power draw (~15W)
+- Connects directly to existing traffic camera video streams and controller serial/NTCIP ports
 
 **Connectivity:**
 
@@ -711,11 +711,11 @@ Full Dark          Camera (IR-assisted)   Headlight blob        Vehicle count
 
 Alternative approaches and why they were rejected:
 
-| Alternative | Cost | Reliability | Why Rejected |
+| Alternative | Hardware Requirement | Reliability | Assessment |
 | --- | --- | --- | --- |
-| Radar/microwave sensor | $500–2,000/unit | High (weather-immune) | High capital expenditure for a limited-duration use case (a few hours per day) |
-| Thermal/FLIR camera | $2,000–10,000/unit | High | Prohibitively expensive for city-wide deployment |
-| IR illumination + standard camera | $20–50/unit | Good | **Selected** — minimal cost, good performance |
+| Radar/microwave sensor | Requires specialized dedicated radar sensors | High (weather-immune) | Unnecessary hardware addition for limited-duration nighttime use |
+| Thermal/FLIR camera | Requires dedicated specialized thermal imaging units | High | Prohibitively complex and demanding for city-scale rollout |
+| IR illumination + standard camera | Leverages standard IP cameras with built-in IR | Good | **Selected** — Uses existing camera infrastructure, robust performance |
 
 ---
 
@@ -733,7 +733,7 @@ Alternative approaches and why they were rejected:
 >
 > Instead, FlowGrid uses **dedicated preemption hardware** (similar to the Opticom system widely deployed in North America):
 >
-> - Each emergency vehicle is equipped with a small IR or radio transmitter (~$100/vehicle)
+> - Each emergency vehicle is equipped with a standard optical IR or encrypted radio transponder
 > - Each intersection has a receiver that detects the approaching emergency vehicle and its direction
 > - This method has near-zero false positives and unambiguous directionality
 
@@ -1105,66 +1105,64 @@ Edge SQLite ──→ Batch Sync ──→ Cloud PostgreSQL ──→ Dashboard
 
 ---
 
-## 19. Pilot Cost Estimate — HCMC
+---
 
-### 19.1 Design Principle: Minimal Viable Investment
+## 19. Infrastructure and Hardware Integration Strategy — HCMC Pilot
 
-FlowGrid is designed to be deployed **incrementally** — start with one corridor, prove value, then expand. The pilot cost estimate below covers a **single corridor of 10 intersections** in District 1, HCMC.
+### 19.1 Design Principle: Leveraging Existing Municipal Infrastructure
 
-### 19.2 Hardware Cost (Per 10-Intersection Corridor)
+A key barrier to smart traffic adoption in developing cities is the demand for expensive civil works, road excavation, and proprietary sensor loops. FlowGrid eliminates this friction by operating as an **overlay intelligence layer** designed to leverage existing urban infrastructure already deployed across Ho Chi Minh City:
 
-| Item | Unit Cost | Qty | Total |
-|---|---|---|---|
-| Traffic camera (1080p, IR-capable, weatherproof) | $300 | 40 (4 per intersection) | $12,000 |
-| Edge compute device (Jetson Orin Nano or equiv.) | $250 | 10 | $2,500 |
-| IR illuminator (850nm LED) | $30 | 40 | $1,200 |
-| Mounting hardware & cabling | $100 | 10 | $1,000 |
-| 4G/LTE modem per node | $50 | 10 | $500 |
-| Emergency preemption receiver | $150 | 10 | $1,500 |
-| Emergency vehicle transmitter | $100 | 20 | $2,000 |
-| **Hardware subtotal** | | | **$20,700** |
+1. **Existing Camera Network**: The vision layer ingests real-time video streams (RTSP/H.264) directly from existing municipal surveillance and traffic management cameras already installed along major District 1 corridors. Zero new camera installation is required where existing coverage is present.
+2. **Existing Signal Controller Cabinets**: FlowGrid's edge compute modules are compact industrial units designed to be placed directly inside existing roadside signal controller cabinets, drawing minimal power (~15W) and interfacing directly with the controller board.
+3. **Zero Road Excavation**: Unlike legacy inductive loop systems (SCATS/SCOOT) that require cutting asphalt and burying electromagnetic sensors, FlowGrid relies entirely on non-intrusive computer vision and existing GPS floating car data feeds.
 
-### 19.3 Software & Cloud Cost (First Year)
+### 19.2 Hardware Integration Architecture (Per Corridor)
 
-| Item | Monthly | Annual |
+| Infrastructure Component | Integration Method | Deployment Requirement |
 |---|---|---|
-| Cloud hosting (monitoring dashboard, APIs, analytics) | $50 | $600 |
-| GPS data API (Google/TomTom — corridor-level queries) | $30 | $360 |
-| 4G data plans (10 nodes, low bandwidth) | $100 | $1,200 |
-| CVAT annotation hosting (self-hosted, one-time setup) | — | $0 |
-| **Software subtotal** | | **$2,160** |
+| **Traffic Cameras** | Existing municipal IP camera network feeds (RTSP/H.264) | Connect to existing city camera streams; off-the-shelf cameras where gaps exist |
+| **Edge Compute Units** | Standard embedded modules (NVIDIA Jetson, Rockchip, or industrial edge PC) | Installed directly inside existing roadside signal controller cabinets |
+| **Signal Controller Interface** | Standard NTCIP / RS-232 / RS-485 serial communication | Software bridge to existing signal hardware; Conflict Monitor remains untouched |
+| **Corridor Connectivity** | Standard 4G/LTE cellular connection or municipal fiber | Secure telemetry & corridor offset sync |
+| **Emergency Preemption** | Optical IR / Radio transponders on emergency vehicles | Compact receiver on signal mast, standard transmitter in ambulances |
 
-### 19.4 Human Effort (One-Time, Fine-Tuning for HCMC)
+### 19.3 Software & Cloud Integration
 
-| Task | Effort | Cost Estimate |
-|---|---|---|
-| Camera installation & wiring (local contractor) | 5 days | $2,000 |
-| Traffic data collection (camera footage + vehicle counts) | 3 days | Mentor-supported |
-| Image annotation (1,500 images) | 5 days | $500 (local annotators) |
-| Model fine-tuning & validation | 2 days | Team effort |
-| Intersection configuration & corridor mapping | 2 days | Mentor-supported |
-| Shadow mode calibration & testing | 5 days | Team effort |
-| **Human effort subtotal** | ~3 weeks | **~$2,500** |
+- **Monitoring Dashboard**: Hosted on lightweight cloud infrastructure or local municipal servers, providing transport operators with real-time corridor telemetry, green split visualizations, and performance analytics.
+- **GPS Speed Data**: Consumed via standard traffic data APIs (e.g., Grab, TomTom, or Google Maps) to dynamically tune corridor green wave offsets.
+- **Model Management**: Central model registry pushes optimized YOLO model weights over-the-air (OTA) to edge nodes without requiring physical site visits.
 
-### 19.5 Total Pilot Investment
+### 19.4 HCMC Local Fine-Tuning & Deployment Timeline
 
-| Category | Cost |
-|---|---|
-| Hardware (10 intersections) | $20,700 |
-| Software & cloud (year 1) | $2,160 |
-| Human effort (one-time) | $2,500 |
-| **Total pilot cost** | **~$25,360** |
-| **Per intersection** | **~$2,536** |
+Adapting FlowGrid to Ho Chi Minh City is a structured **3–4 week one-time onboarding effort** conducted in collaboration with Vietnamese mentors:
 
-> **Context:** This is significantly lower than comparable systems. SCATS and SCOOT deployments typically cost $20,000–50,000 *per intersection* for hardware and licensing alone. FlowGrid achieves this through open-source software, commodity edge hardware, and camera-based sensing that avoids expensive road-embedded sensors.
+```
+Week 1: SYSTEM SETUP & DATA ACQUISITION
+├── Ingest existing camera feeds from target corridor (e.g. Nguyen Hue - Le Loi)
+├── Connect edge computing modules to existing signal controller cabinets
+├── Import intersection geometry from OpenStreetMap (OSM)
+└── Configure intersection phase maps with local traffic engineers
 
-### 19.6 Expansion Economics
+Week 2: MODEL FINE-TUNING
+├── Collect 2–3 days of local traffic video covering peak and off-peak hours
+├── Annotate 1,000–1,500 sample frames for local vehicle classes (motorcycles, cars, buses, trucks)
+├── Fine-tune YOLOv8 model using transfer learning (4–8 hours GPU training)
+└── Validate detection accuracy (target >85% mAP across all classes)
 
-After the pilot proves value, expanding to additional corridors costs less due to:
-- **No repeated software development** — same codebase, same dashboard
-- **No repeated model training** — HCMC model works across all HCMC intersections
-- **Bulk hardware pricing** — cameras and edge devices drop 20–30% at volume
-- **Estimated expansion cost:** ~$1,800–2,200 per intersection (hardware + installation only)
+Week 3–4: SHADOW TESTING & ACTIVATION
+├── Run FlowGrid in shadow mode (computes timing recommendations without actuating signals)
+├── Compare FlowGrid performance against existing fixed-cycle timing plans
+├── Calibrate PCU weights and saturation flow rates with on-ground traffic data
+└── Activate FlowGrid in live adaptive mode, corridor by corridor
+```
+
+### 19.5 Expansion to Additional Corridors
+
+Once the initial corridor is calibrated, expanding FlowGrid across additional intersections in HCMC or transferring to other cities (e.g., Hanoi, Da Nang) is rapid and frictionless:
+- **Shared Model Weights**: The fine-tuned Vietnamese vehicle detection model applies across all intersections in the city without retraining.
+- **Rapid Configuration**: New intersections only require importing lane geometry from OpenStreetMap and connecting the controller interface.
+- **No Disruption**: Traffic signals remain fully operational during setup, with hardware conflict monitors ensuring uninterrupted safety throughout.
 
 ---
 

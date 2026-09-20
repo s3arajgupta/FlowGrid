@@ -319,8 +319,13 @@ def convert_markdown_to_docx(md_path, docx_path):
         
         i += 1
 
-    doc.save(docx_path)
-    print(f"[+] DOCX successfully generated: {docx_path}")
+    try:
+        doc.save(docx_path)
+        print(f"[+] DOCX successfully generated: {docx_path}")
+    except PermissionError:
+        fallback_path = docx_path.replace(".docx", "_Updated.docx")
+        doc.save(fallback_path)
+        print(f"[!] Warning: {docx_path} is currently open in Word. Saved to: {fallback_path}")
 
 if __name__ == '__main__':
     src_md = r"e:\GitHub\DataForLife Smart Traffic Lights\FlowGrid_Proposal.md"
