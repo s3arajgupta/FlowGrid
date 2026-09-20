@@ -13,12 +13,13 @@
     <div class="logo-group">
       <div class="logo-icon">FG</div>
       <div class="title-wrap">
-        <h1>FlowGrid <span class="badge"><span class="badge-pulse"></span> EDGE NODE ONLINE</span></h1>
+        <h1>FlowGrid <span class="badge" id="backend-status-badge"><span class="badge-pulse"></span> PYTHON API ONLINE</span></h1>
         <p>Team Jam Breakers | International Hackathon — Vietnam 2026</p>
       </div>
     </div>
     <nav>
       <button class="tab-btn active" data-tab="tab-intersection">Live Intersection</button>
+      <button class="tab-btn" data-tab="tab-vision">YOLOv8 Vision Lab</button>
       <button class="tab-btn" data-tab="tab-corridor">Corridor Green Wave</button>
       <button class="tab-btn" data-tab="tab-pcu">PCU Explainer</button>
       <button class="tab-btn" data-tab="tab-about">Architecture</button>
@@ -54,7 +55,7 @@
           <div class="card">
             <div class="card-title">
               <span>LIVE INTERSECTION TOPOLOGY</span>
-              <span class="badge" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border-color: rgba(6, 182, 212, 0.2);">YOLOv8 Edge Telemetry</span>
+              <span class="badge" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border-color: rgba(6, 182, 212, 0.2);">Connected to Python Optimizer</span>
             </div>
             
             <div class="intersection-wrapper">
@@ -201,7 +202,7 @@
 
           <!-- Dynamic Green Split Allocation -->
           <div class="card">
-            <div class="card-title">ADAPTIVE GREEN TIME SPLIT</div>
+            <div class="card-title">ADAPTIVE GREEN TIME SPLIT (PYTHON OPTIMIZER)</div>
             <div class="split-bar-wrap">
               <div class="split-labels">
                 <span id="split-label-p1" style="color: var(--accent-cyan);">Phase 1 (Major N-S): 53s</span>
@@ -269,7 +270,64 @@
       </div>
     </div>
 
-    <!-- TAB 2: Corridor Green Wave -->
+    <!-- TAB 2: Live YOLOv8 Vision Upload Lab -->
+    <div id="tab-vision" class="tab-pane">
+      <div class="card">
+        <div class="card-title">
+          <span>YOLOV8 REAL-TIME VISION INFERENCE LAB</span>
+          <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--accent-emerald);">Edge Neural Net</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          Upload any traffic photo from HCMC or street camera to test real-time YOLOv8 vehicle detection, area density estimation, and PCU calculation running on the Python backend.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          
+          <!-- Upload Area -->
+          <div>
+            <div id="drop-zone" style="border: 2px dashed var(--card-border); border-radius: 8px; padding: 2.5rem 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; background: rgba(0,0,0,0.2);">
+              <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📸</div>
+              <div style="font-weight: 700; font-size: 1rem; color: var(--accent-cyan);">Click or Drag & Drop Traffic Image</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Supports JPG, PNG, WEBP</div>
+              <input type="file" id="vision-file-input" accept="image/*" style="display: none;">
+            </div>
+
+            <div style="margin-top: 1rem;">
+              <button id="btn-sample-image" class="preset-btn" style="width: 100%; padding: 0.6rem;">⚡ Load Sample HCMC Traffic Frame</button>
+            </div>
+
+            <!-- Vision Results Telemetry Card -->
+            <div class="card" style="margin-top: 1rem; background: rgba(0,0,0,0.3);">
+              <div class="card-title" style="font-size: 0.85rem;">VISION TELEMETRY RESULTS</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.82rem;">
+                <div>Motorcycles: <strong id="v-count-moto" style="color: var(--accent-amber);">0</strong></div>
+                <div>Cars: <strong id="v-count-car" style="color: var(--accent-cyan);">0</strong></div>
+                <div>Buses: <strong id="v-count-bus" style="color: var(--accent-emerald);">0</strong></div>
+                <div>Trucks: <strong id="v-count-truck" style="color: var(--accent-rose);">0</strong></div>
+              </div>
+              <hr style="border: 0; border-top: 1px solid var(--card-border); margin: 0.75rem 0;">
+              <div style="font-size: 0.85rem;">
+                <div>Total PCU Demand: <strong id="v-pcu-total" style="color: var(--accent-cyan); font-size: 1.1rem;">0.0 PCU</strong></div>
+                <div>Area Occupancy Density: <strong id="v-density" style="color: var(--accent-emerald);">0.0%</strong></div>
+                <div>Lighting Mode: <strong id="v-lighting" style="color: var(--text-main);">DAYLIGHT</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Annotated Image Display -->
+          <div>
+            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">YOLOv8 DETECTIONS & HUD OVERLAY</div>
+            <div id="vision-preview-box" style="width: 100%; min-height: 360px; background: #0D1117; border: 1px solid var(--card-border); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+              <span style="color: var(--text-muted); font-size: 0.85rem;" id="vision-placeholder-text">Upload an image to view YOLOv8 bounding boxes & telemetry</span>
+              <img id="vision-output-img" src="" alt="Annotated Output" style="max-width: 100%; height: auto; display: none; border-radius: 6px;">
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Corridor Green Wave -->
     <div id="tab-corridor" class="tab-pane">
       <div class="card">
         <div class="card-title">
@@ -293,7 +351,7 @@
       </div>
     </div>
 
-    <!-- TAB 3: PCU First-Principles Explainer -->
+    <!-- TAB 4: PCU First-Principles Explainer -->
     <div id="tab-pcu" class="tab-pane">
       <div class="card">
         <div class="card-title">FIRST PRINCIPLES: WHY RAW VEHICLE COUNTS FAIL IN ASEAN</div>
@@ -338,7 +396,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: Architecture & Whitepaper -->
+    <!-- TAB 5: Architecture & Whitepaper -->
     <div id="tab-about" class="tab-pane">
       <div class="card">
         <div class="card-title">FLOWGRID EDGE-FIRST SYSTEM ARCHITECTURE</div>
