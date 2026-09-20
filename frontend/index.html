@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowGrid - Adaptive Traffic Signal Control System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="logo-group">
+      <div class="logo-icon">FG</div>
+      <div class="title-wrap">
+        <h1>FlowGrid <span class="badge"><span class="badge-pulse"></span> EDGE NODE ONLINE</span></h1>
+        <p>Team Jam Breakers | International Hackathon — Vietnam 2026</p>
+      </div>
+    </div>
+    <nav>
+      <button class="tab-btn active" data-tab="tab-intersection">Live Intersection</button>
+      <button class="tab-btn" data-tab="tab-corridor">Corridor Green Wave</button>
+      <button class="tab-btn" data-tab="tab-pcu">PCU Explainer</button>
+      <button class="tab-btn" data-tab="tab-about">Architecture</button>
+    </nav>
+  </header>
+
+  <!-- Main Content Area -->
+  <main>
+
+    <!-- TAB 1: Live Intersection Dashboard -->
+    <div id="tab-intersection" class="tab-pane active">
+      
+      <!-- Scenario Presets -->
+      <div class="card" style="padding: 0.85rem 1.25rem;">
+        <div class="card-title" style="margin-bottom: 0.5rem; font-size: 0.85rem;">
+          <span>QUICK SCENARIO PRESETS (HCMC DISTRICT 1)</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">Intersection: Nguyen Hue Blvd & Le Loi</span>
+        </div>
+        <div class="presets-group">
+          <button class="preset-btn active" data-preset="hcmc_peak">🏍️ HCMC Morning Peak (80 Motorcycles)</button>
+          <button class="preset-btn" data-preset="truck_influx">🚚 Arterial Truck & Bus Influx</button>
+          <button class="preset-btn" data-preset="balanced">⚖️ Balanced Flow</button>
+          <button class="preset-btn" data-preset="night">🌙 Late Night Mode (Count-Only)</button>
+          <button class="preset-btn emergency-btn" data-preset="emergency">🚨 Trigger Ambulance Preemption</button>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Grid -->
+      <div class="dashboard-grid">
+        
+        <!-- Left: Interactive Canvas & Sliders -->
+        <div>
+          <div class="card">
+            <div class="card-title">
+              <span>LIVE INTERSECTION TOPOLOGY</span>
+              <span class="badge" style="background: rgba(6, 182, 212, 0.1); color: var(--accent-cyan); border-color: rgba(6, 182, 212, 0.2);">YOLOv8 Edge Telemetry</span>
+            </div>
+            
+            <div class="intersection-wrapper">
+              <canvas id="intersectionCanvas"></canvas>
+            </div>
+
+            <!-- Approach Sliders -->
+            <div class="approaches-grid">
+              
+              <!-- North -->
+              <div class="approach-box">
+                <div class="approach-header">
+                  <span>NORTH (Nguyen Hue Inbound)</span>
+                  <span id="t-north-pcu" style="color: var(--accent-cyan);">51.0 PCU</span>
+                </div>
+                <div class="slider-row">
+                  <label>Motorcycles (0.5)</label>
+                  <input type="range" id="slider-north-motorcycle" min="0" max="100" value="80">
+                  <span class="slider-val" id="val-north-motorcycle">80</span>
+                </div>
+                <div class="slider-row">
+                  <label>Cars (1.0)</label>
+                  <input type="range" id="slider-north-car" min="0" max="25" value="6">
+                  <span class="slider-val" id="val-north-car">6</span>
+                </div>
+                <div class="slider-row">
+                  <label>Buses (2.5)</label>
+                  <input type="range" id="slider-north-bus" min="0" max="10" value="2">
+                  <span class="slider-val" id="val-north-bus">2</span>
+                </div>
+                <div class="slider-row">
+                  <label>Trucks (3.0)</label>
+                  <input type="range" id="slider-north-truck" min="0" max="10" value="0">
+                  <span class="slider-val" id="val-north-truck">0</span>
+                </div>
+              </div>
+
+              <!-- South -->
+              <div class="approach-box">
+                <div class="approach-header">
+                  <span>SOUTH (Nguyen Hue Outbound)</span>
+                  <span id="t-south-pcu" style="color: var(--accent-cyan);">24.0 PCU</span>
+                </div>
+                <div class="slider-row">
+                  <label>Motorcycles</label>
+                  <input type="range" id="slider-south-motorcycle" min="0" max="100" value="35">
+                  <span class="slider-val" id="val-south-motorcycle">35</span>
+                </div>
+                <div class="slider-row">
+                  <label>Cars</label>
+                  <input type="range" id="slider-south-car" min="0" max="25" value="4">
+                  <span class="slider-val" id="val-south-car">4</span>
+                </div>
+                <div class="slider-row">
+                  <label>Buses</label>
+                  <input type="range" id="slider-south-bus" min="0" max="10" value="1">
+                  <span class="slider-val" id="val-south-bus">1</span>
+                </div>
+                <div class="slider-row">
+                  <label>Trucks</label>
+                  <input type="range" id="slider-south-truck" min="0" max="10" value="0">
+                  <span class="slider-val" id="val-south-truck">0</span>
+                </div>
+              </div>
+
+              <!-- East -->
+              <div class="approach-box">
+                <div class="approach-header">
+                  <span>EAST (Le Loi Eastbound)</span>
+                  <span id="t-east-pcu" style="color: var(--accent-amber);">11.5 PCU</span>
+                </div>
+                <div class="slider-row">
+                  <label>Motorcycles</label>
+                  <input type="range" id="slider-east-motorcycle" min="0" max="100" value="10">
+                  <span class="slider-val" id="val-east-motorcycle">10</span>
+                </div>
+                <div class="slider-row">
+                  <label>Cars</label>
+                  <input type="range" id="slider-east-car" min="0" max="25" value="4">
+                  <span class="slider-val" id="val-east-car">4</span>
+                </div>
+                <div class="slider-row">
+                  <label>Buses</label>
+                  <input type="range" id="slider-east-bus" min="0" max="10" value="1">
+                  <span class="slider-val" id="val-east-bus">1</span>
+                </div>
+                <div class="slider-row">
+                  <label>Trucks</label>
+                  <input type="range" id="slider-east-truck" min="0" max="10" value="0">
+                  <span class="slider-val" id="val-east-truck">0</span>
+                </div>
+              </div>
+
+              <!-- West -->
+              <div class="approach-box">
+                <div class="approach-header">
+                  <span>WEST (Le Loi Westbound)</span>
+                  <span id="t-west-pcu" style="color: var(--accent-amber);">6.0 PCU</span>
+                </div>
+                <div class="slider-row">
+                  <label>Motorcycles</label>
+                  <input type="range" id="slider-west-motorcycle" min="0" max="100" value="8">
+                  <span class="slider-val" id="val-west-motorcycle">8</span>
+                </div>
+                <div class="slider-row">
+                  <label>Cars</label>
+                  <input type="range" id="slider-west-car" min="0" max="25" value="2">
+                  <span class="slider-val" id="val-west-car">2</span>
+                </div>
+                <div class="slider-row">
+                  <label>Buses</label>
+                  <input type="range" id="slider-west-bus" min="0" max="10" value="0">
+                  <span class="slider-val" id="val-west-bus">0</span>
+                </div>
+                <div class="slider-row">
+                  <label>Trucks</label>
+                  <input type="range" id="slider-west-truck" min="0" max="10" value="0">
+                  <span class="slider-val" id="val-west-truck">0</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Telemetry & Optimizer Benchmark -->
+        <div>
+          
+          <!-- Key Metrics -->
+          <div class="metrics-row">
+            <div class="metric-card">
+              <div class="metric-label">Total Vehicles</div>
+              <div class="metric-val cyan" id="m-total-vehicles">150</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">True PCU Demand</div>
+              <div class="metric-val amber" id="m-total-pcu">92.5</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Delay Saved</div>
+              <div class="metric-val emerald" id="m-delay-reduction">+30.2%</div>
+            </div>
+          </div>
+
+          <!-- Dynamic Green Split Allocation -->
+          <div class="card">
+            <div class="card-title">ADAPTIVE GREEN TIME SPLIT</div>
+            <div class="split-bar-wrap">
+              <div class="split-labels">
+                <span id="split-label-p1" style="color: var(--accent-cyan);">Phase 1 (Major N-S): 53s</span>
+                <span id="split-label-p2" style="color: var(--accent-amber);">Phase 2 (Minor E-W): 10s</span>
+              </div>
+              <div class="split-bar">
+                <div class="split-p1" id="split-bar-p1" style="width: 84%;"></div>
+                <div class="split-p2" id="split-bar-p2" style="width: 16%;"></div>
+              </div>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-muted);">
+              ⚡ Saturation flow auto-boosted +40% for motorcycle filtering off the stop line. Minimum green (10s) and clearance intervals enforced.
+            </p>
+          </div>
+
+          <!-- Benchmark Comparison Table -->
+          <div class="card">
+            <div class="card-title">FIXED CYCLE vs. FLOWGRID ADAPTIVE</div>
+            <table class="comp-table">
+              <thead>
+                <tr>
+                  <th>Metric</th>
+                  <th>Fixed Baseline (30s/30s)</th>
+                  <th>FlowGrid Adaptive</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Phase Allocation</td>
+                  <td>30s / 30s Fixed</td>
+                  <td id="comp-split" class="pill-good">53s / 10s Adaptive</td>
+                </tr>
+                <tr>
+                  <td>Total Delay</td>
+                  <td id="comp-fixed-delay">1250.0 sec</td>
+                  <td id="comp-adaptive-delay" class="pill-good">872.2 sec</td>
+                </tr>
+                <tr>
+                  <td>Wasted Green Time</td>
+                  <td>20s wasted on empty side</td>
+                  <td id="m-wasted-green" class="pill-good">20s saved</td>
+                </tr>
+                <tr>
+                  <td>Commute Improvement</td>
+                  <td>Baseline</td>
+                  <td id="comp-improvement" class="pill-good">+30.2% Faster</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Approach Densities -->
+          <div class="card">
+            <div class="card-title">ROAD AREA OCCUPANCY DENSITY</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.8rem;">
+              <div>North Approach: <strong id="t-north-dens" style="color: var(--accent-rose);">88%</strong> (High Density)</div>
+              <div>South Approach: <strong id="t-south-dens" style="color: var(--accent-amber);">40%</strong> (Moderate)</div>
+              <div>East Approach: <strong id="t-east-dens" style="color: var(--accent-emerald);">15%</strong> (Light)</div>
+              <div>West Approach: <strong id="t-west-dens" style="color: var(--accent-emerald);">10%</strong> (Light)</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: Corridor Green Wave -->
+    <div id="tab-corridor" class="tab-pane">
+      <div class="card">
+        <div class="card-title">
+          <span>NGUYEN HUE BOULEVARD — CORRIDOR GREEN WAVE COORDINATION</span>
+          <span class="badge">Adaptive Offsets Active</span>
+        </div>
+
+        <div class="corridor-controls">
+          <label style="font-weight: 600; font-size: 0.9rem;">Real-time GPS Corridor Speed:</label>
+          <input type="range" id="corridor-speed-slider" min="15" max="60" value="40" style="flex: 1; accent-color: var(--accent-cyan);">
+          <span id="corridor-speed-val" style="font-weight: 800; font-size: 1.1rem; color: var(--accent-cyan); width: 80px;">40 km/h</span>
+        </div>
+
+        <div class="corridor-timeline" id="corridor-nodes-container">
+          <!-- Dynamically populated via app.js -->
+        </div>
+
+        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid var(--card-border); font-size: 0.82rem; color: var(--text-muted);">
+          💡 <strong>How it works:</strong> As real-time congestion slows vehicles from 40 km/h to 22 km/h (detected via Grab / floating car data), FlowGrid dynamically widens the offsets between consecutive intersections (from +29s to +52s). Commuters maintain uninterrupted green waves even under degraded traffic speeds.
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: PCU First-Principles Explainer -->
+    <div id="tab-pcu" class="tab-pane">
+      <div class="card">
+        <div class="card-title">FIRST PRINCIPLES: WHY RAW VEHICLE COUNTS FAIL IN ASEAN</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+          In Vietnam, 80% of traffic consists of motorcycles. Comparing two approaches with raw counts creates severe distortions:
+        </p>
+
+        <div class="pcu-comparison-grid">
+          
+          <div class="pcu-card">
+            <h3 style="color: var(--accent-amber);">Approach A: Motorcycle Dense (Nguyen Hue)</h3>
+            <div class="vehicle-icons-box">
+              <span class="v-tag v-moto">🏍️ x40 Motorcycles</span>
+              <span class="v-tag v-car">🚗 x5 Cars</span>
+            </div>
+            <ul style="font-size: 0.82rem; color: var(--text-muted); list-style: none;">
+              <li><strong>Raw Count:</strong> 45 vehicles (looks huge!)</li>
+              <li><strong>FlowGrid PCU:</strong> (40 × 0.5) + (5 × 1.0) = <strong style="color: var(--accent-cyan);">25.0 PCU</strong></li>
+              <li><strong>Road Footprint:</strong> Small, compact, clears fast</li>
+            </ul>
+          </div>
+
+          <div class="pcu-card">
+            <h3 style="color: var(--accent-rose);">Approach B: Heavy Freight (Le Loi)</h3>
+            <div class="vehicle-icons-box">
+              <span class="v-tag v-truck">🚚 x2 Trucks</span>
+              <span class="v-tag v-bus">🚌 x2 Buses</span>
+              <span class="v-tag v-car">🚗 x8 Cars</span>
+            </div>
+            <ul style="font-size: 0.82rem; color: var(--text-muted); list-style: none;">
+              <li><strong>Raw Count:</strong> 12 vehicles (looks small!)</li>
+              <li><strong>FlowGrid PCU:</strong> (2 × 3.0) + (2 × 2.5) + (8 × 1.0) = <strong style="color: var(--accent-cyan);">19.0 PCU</strong></li>
+              <li><strong>Road Footprint:</strong> Massive physical space, slow acceleration</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; font-size: 0.85rem;">
+          🎯 <strong>The Verdict:</strong> Raw counts suggest Approach A needs <strong>3.75x</strong> more green time than Approach B. FlowGrid's PCU engine reveals the true capacity demand ratio is only <strong>1.32 : 1.00</strong>. FlowGrid prevents starvation of critical public transit and freight routes.
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Architecture & Whitepaper -->
+    <div id="tab-about" class="tab-pane">
+      <div class="card">
+        <div class="card-title">FLOWGRID EDGE-FIRST SYSTEM ARCHITECTURE</div>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+          FlowGrid is designed for rapid 3–4 week deployment per city, zero cloud dependency in the safety-critical loop, and commodity edge hardware ($2,536 per intersection vs $20k+ for legacy SCATS/SCOOT).
+        </p>
+
+        <div style="background: #000; padding: 1.25rem; border-radius: 8px; font-family: monospace; font-size: 0.8rem; line-height: 1.6; color: var(--accent-emerald);">
+          ┌─────────────────────────────────────────────────────────────┐<br>
+          │                     CLOUD PLATFORM                          │<br>
+          │  Monitoring Dashboard · Analytics · Policy Updates          │<br>
+          ├─────────────────────────────────────────────────────────────┤<br>
+          │                  COORDINATION LAYER                         │<br>
+          │  Green Wave Corridors · Adaptive Offsets · Wave Switching   │<br>
+          ├─────────────────────────────────────────────────────────────┤<br>
+          │                  OPTIMIZATION LAYER                         │<br>
+          │  PCU-Weighted Demand · Multi-Objective Optimizer            │<br>
+          ├─────────────────────────────────────────────────────────────┤<br>
+          │                    SENSING LAYER                            │<br>
+          │  Camera + YOLOv8 · Induction Loops · GPS Floating Car Data │<br>
+          ├─────────────────────────────────────────────────────────────┤<br>
+          │              SAFETY LAYER (HARDWARE)                        │<br>
+          │  Conflict Monitor · Minimum Phase Times · Fixed Fallback   │<br>
+          └─────────────────────────────────────────────────────────────┘
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <p style="font-size: 0.85rem;">
+            📄 Full Technical Whitepaper & Case Study: <a href="../FlowGrid_Proposal.md" style="color: var(--accent-cyan); font-weight: 600;">FlowGrid_Proposal.md</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>FlowGrid | Developed by Team Jam Breakers for the International Hackathon — Vietnam 2026</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

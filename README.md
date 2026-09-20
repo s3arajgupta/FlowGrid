@@ -130,24 +130,31 @@ pip install -r requirements.txt
 
 *(Note: If you only want to test the mathematical simulation and optimizer without running YOLO vision on GPU, the code runs with zero external heavy dependencies!)*
 
-### 4.5 Step 4: Run the CLI Proof of Work Suite
+### 4.5 Step 4: Run the Interactive Web Dashboard or CLI Suite
 
-#### Mode 1: Run Full End-to-End Simulation Benchmark (Default)
+#### Option A: Launch Interactive Web Dashboard (Recommended)
+```bash
+python src/app.py
+```
+*Opens `http://localhost:8000` automatically in your browser with real-time 4-way intersection simulation, interactive vehicle sliders, HCMC presets, and green wave progression.*
+*(Alternatively, you can simply open `frontend/index.html` directly in any web browser without running a server!)*
+
+#### Option B: Run CLI Proof of Work Benchmark Suite
 ```bash
 python src/demo.py --mode all
 ```
 
-#### Mode 2: Run Educational PCU vs. Raw Count Breakdown
+#### Option C: Run Educational PCU vs. Raw Count Breakdown
 ```bash
 python src/demo.py --mode pcu-explain
 ```
 
-#### Mode 3: Run HCMC Corridor Green Wave Demo
+#### Option D: Run HCMC Corridor Green Wave Demo
 ```bash
 python src/demo.py --mode corridor
 ```
 
-#### Mode 4: Run YOLOv8 Vision Processing on a Real Image
+#### Option E: Run YOLOv8 Vision Processing on a Real Image
 ```bash
 python src/demo.py --mode vision --input path/to/traffic_image.jpg
 ```
@@ -188,8 +195,13 @@ FlowGrid/
 ├── requirements.txt           # Python dependencies
 ├── configs/
 │   └── intersection.yaml      # Sample HCMC District 1 intersection parameters
+├── frontend/                  # Interactive Web Dashboard
+│   ├── index.html             # Dashboard UI with live intersection canvas
+│   ├── style.css              # Modern telemetry styling
+│   └── app.js                 # Real-time traffic simulation & PCU optimizer logic
 ├── src/
 │   ├── __init__.py
+│   ├── app.py                 # Local web dashboard server launcher
 │   ├── detector.py            # YOLOv8 vehicle detection & area density engine
 │   ├── pcu.py                 # PCU converter & saturation flow adjustments
 │   ├── optimizer.py           # Multi-objective adaptive signal timing engine
